@@ -9,6 +9,8 @@ import config
 TOKEN = config.token
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
 
+def get_response(text):
+    return text.upper() + "!";
 
 def get_url(url):
     response = requests.get(url)
@@ -23,9 +25,9 @@ def get_json_from_url(url):
 
 
 def get_updates(offset=None):
-    url = URL + "getUpdates"
+    url = URL + "getUpdates?timeout=100"
     if offset:
-        url += "?offset={}".format(offset)
+        url += "&offset={}".format(offset)
     js = get_json_from_url(url)
     return js
 
@@ -41,7 +43,7 @@ def echo_all(updates):
     for update in updates["result"]:
         text = update["message"]["text"]
         chat = update["message"]["chat"]["id"]
-        send_message(text, chat)
+        send_message(get_response(text), chat)
 
 
 def get_last_chat_id_and_text(updates):
