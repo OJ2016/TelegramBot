@@ -5,6 +5,8 @@ import urllib
 
 import config
 
+starttime = -1
+endtime = -1
 
 TOKEN = config.token
 URL = "https://api.telegram.org/bot{}/".format(TOKEN)
@@ -19,7 +21,14 @@ def get_url(url):
 
 
 def get_json_from_url(url):
-    content = get_url(url)
+    while True:
+        try:
+            content = get_url(url)
+            break
+        except:
+            print("having troubles with connection")
+            time.sleep(5)
+
     js = json.loads(content)
     return js
 
@@ -41,10 +50,32 @@ def get_last_update_id(updates):
 
 def echo_all(updates):
     for update in updates["result"]:
-        text = update["message"]["text"]
-        chat = update["message"]["chat"]["id"]
-        send_message(get_response(text), chat)
-
+        print(update)
+        if "message" in update:
+             text = update["message"]["text"]
+             chat = update["message"]["chat"]["id"]
+             send_message(get_response(text), chat)
+        elif "channel_post" in update:
+             text = update["channel_post"]["text"]
+             chat = update["channel_post"]["chat"]["id"]
+             if update["channel_post"]["chat"]["username"] == "worktimebotchat":
+                 global starttime,endtime
+                 if text == "start":
+                     if(starttime == -1):
+                         starttime = time.time()
+                 if text == "end":
+                     if(endtime == -1):
+                         endtime = time.time()
+                         timesecs = endtime - starttime
+                         timemins = timesecs/60
+                         min = timemins%60
+                         hour = (timemins - min)/60
+                         msg = "Worktime "+str(round(hour))+"h "+str(round(min))+"min"
+                         send_message(msg,chat)
+                         endtime = -1
+                         starttime = -1
+             else:
+                 send_message(get_response(text), chat)
 
 def get_last_chat_id_and_text(updates):
     num_updates = len(updates["result"])
@@ -61,6 +92,8 @@ def send_message(text, chat_id):
 
 
 def main():
+    print("starting")
+    print(starttime)
     last_update_id = None
     while True:
         updates = get_updates(last_update_id)
